@@ -1,28 +1,54 @@
 {% extends "base.html" %}
-{% block content %}
 
-<div class="mb-4">
-    <h3 class="fw-semibold">Welcome, {{ request.user.username }} 👋</h3>
-    <p class="text-muted">
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'mock_test' %}" class="btn btn-danger mb-4">
+    Take Full Mock Test
+</a>
+
+
+    <h2 class="mb-2">Welcome, {{ request.user.username }} 👋</h2>
+    <p class="text-muted mb-4">
         Choose a section and start preparing for your placements
     </p>
-</div>
 
-<div class="row">
-    {% for section in sections %}
-    <div class="col-md-3 mb-4">
-        <div class="card p-3 h-100 text-center">
-            <h5 class="mb-3">{{ section.name }}</h5>
-            <p class="text-muted small">
-                Practice questions curated for {{ section.name }}
-            </p>
-            <a href="{% url 'practice' section.id %}" class="btn btn-outline-primary btn-sm mt-auto">
+    <div class="row">
+        {% for section in sections %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body d-flex flex-column">
 
-                Start Practice
-            </a>
+                    <h5 class="card-title">{{ section.name }}</h5>
+                    <p class="card-text text-muted">
+                        Practice questions curated for {{ section.name }}
+                    </p>
+
+                    <!-- Start Practice Button -->
+                    <a href="{% url 'practice' section.id %}"
+                       class="btn btn-primary btn-sm mt-auto mb-2">
+                        Start Practice
+                    </a>
+
+                    
+
+                </div>
+            </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-</div>
 
+    {% if progress %}
+    <hr>
+    <h5 class="mt-4">Your Recent Progress</h5>
+    <ul class="list-group mt-2">
+        {% for p in progress %}
+        <li class="list-group-item d-flex justify-content-between">
+            <span>{{ p.section.name }}</span>
+            <strong>{{ p.correct }}/{{ p.attempted }}</strong>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+</div>
 {% endblock %}

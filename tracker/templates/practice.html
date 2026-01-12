@@ -1,54 +1,110 @@
 {% extends "base.html" %}
 {% block content %}
 
+<h3>{{ section.name }} – Practice Questions</h3>
+
 {% if submitted %}
 <div class="alert alert-success">
-    <strong>Result:</strong> You scored {{ score }} out of {{ total }}
+    Result: You scored {{ score }} out of {{ total }}
 </div>
 {% endif %}
 
-
-<h4 class="mb-3">{{ section.name }} – Practice Questions</h4>
-
-{% if questions %}
-<form method="POST">
+<form method="post">
     {% csrf_token %}
 
     {% for q in questions %}
-    <div class="card mb-4 p-3">
-        <p><strong>Q{{ forloop.counter }}. {{ q.question }}</strong></p>
+    <div class="card p-3 mb-3">
 
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="A">
-            <label class="form-check-label">{{ q.option_a }}</label>
+        <strong>Q{{ forloop.counter }}. {{ q.question }}</strong><br><br>
+
+        <!-- OPTION A -->
+        <div
+            {% if submitted %}
+                {% if q.correct_answer == "A" %}
+                    style="color: green; font-weight: bold;"
+                {% elif answers.q.id == "A" %}
+                    style="color: red;"
+                {% endif %}
+            {% endif %}
+        >
+            <input type="radio"
+                   name="q{{ q.id }}"
+                   value="A"
+                   {% if submitted %}disabled{% endif %}
+                   {% if answers.q.id == "A" %}checked{% endif %}
+            >
+            {{ q.option_a }}
+            {% if submitted and q.correct_answer == "A" %} ✅ {% endif %}
         </div>
 
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="B">
-            <label class="form-check-label">{{ q.option_b }}</label>
+        <!-- OPTION B -->
+        <div
+            {% if submitted %}
+                {% if q.correct_answer == "B" %}
+                    style="color: green; font-weight: bold;"
+                {% elif answers.q.id == "B" %}
+                    style="color: red;"
+                {% endif %}
+            {% endif %}
+        >
+            <input type="radio"
+                   name="q{{ q.id }}"
+                   value="B"
+                   {% if submitted %}disabled{% endif %}
+                   {% if answers.q.id == "B" %}checked{% endif %}
+            >
+            {{ q.option_b }}
+            {% if submitted and q.correct_answer == "B" %} ✅ {% endif %}
         </div>
 
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="C">
-            <label class="form-check-label">{{ q.option_c }}</label>
+        <!-- OPTION C -->
+        <div
+            {% if submitted %}
+                {% if q.correct_answer == "C" %}
+                    style="color: green; font-weight: bold;"
+                {% elif answers.q.id == "C" %}
+                    style="color: red;"
+                {% endif %}
+            {% endif %}
+        >
+            <input type="radio"
+                   name="q{{ q.id }}"
+                   value="C"
+                   {% if submitted %}disabled{% endif %}
+                   {% if answers.q.id == "C" %}checked{% endif %}
+            >
+            {{ q.option_c }}
+            {% if submitted and q.correct_answer == "C" %} ✅ {% endif %}
         </div>
 
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="D">
-            <label class="form-check-label">{{ q.option_d }}</label>
+        <!-- OPTION D -->
+        <div
+            {% if submitted %}
+                {% if q.correct_answer == "D" %}
+                    style="color: green; font-weight: bold;"
+                {% elif answers.q.id == "D" %}
+                    style="color: red;"
+                {% endif %}
+            {% endif %}
+        >
+            <input type="radio"
+                   name="q{{ q.id }}"
+                   value="D"
+                   {% if submitted %}disabled{% endif %}
+                   {% if answers.q.id == "D" %}checked{% endif %}
+            >
+            {{ q.option_d }}
+            {% if submitted and q.correct_answer == "D" %} ✅ {% endif %}
         </div>
+
     </div>
     {% endfor %}
 
     {% if not submitted %}
-<button type="submit" class="btn btn-primary">
-    Submit Answers
-</button>
-{% endif %}
-
+    <button type="submit" class="btn btn-primary">
+        Submit Answers
+    </button>
+    {% endif %}
 </form>
-{% else %}
-<p class="text-muted">No questions available for this section.</p>
-{% endif %}
 
 {% endblock %}

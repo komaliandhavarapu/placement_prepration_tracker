@@ -55,8 +55,10 @@ def dashboard_view(request):
     sections = Section.objects.all()
     return render(request, "dashboard.html", {"sections": sections})
 
+from django.contrib.auth.decorators import login_required
 from .models import PracticeQuestion, Section, Progress
 
+@login_required
 def practice_view(request, section_id):
     section = Section.objects.get(id=section_id)
     questions = PracticeQuestion.objects.filter(section=section)
@@ -64,16 +66,18 @@ def practice_view(request, section_id):
     score = 0
     total = questions.count()
     submitted = False
+    answers = {}  # store user's answers
 
     if request.method == "POST":
         submitted = True
 
         for q in questions:
             selected = request.POST.get(f"q{q.id}")
-            if selected == q.correct_answer:
+            answers[q.id] = selected
+
+            if selected and selected.upper() == q.correct_answer.upper():
                 score += 1
 
-        # ✅ THIS IS THE IMPORTANT PART YOU ASKED ABOUT
         Progress.objects.create(
             user=request.user,
             section=section,
@@ -89,6 +93,47 @@ def practice_view(request, section_id):
             "questions": questions,
             "score": score,
             "total": total,
-            "submitted": submitted
+            "submitted": submitted,
+            "answers": answers,   # 🔥 IMPORTANT
         }
     )
+
+
+import random
+from django.contrib.auth.decorators import login_required
+from .models import PracticeQuestion
+
+@login_required
+def mock_test_view(request):
+    questions = list(PracticeQuestion.objects.all())
+    random.shuffle(questions)
+    questions = questions[:12]  # 12 questions
+
+    score = 0
+    total = len(questions)
+    submitted = False
+    submitted_answers = {}
+
+    if request.method == "POST":
+        submitted = True
+
+        for q in questions:
+            selected = request.POST.get(f"q{q.id}")
+            submitted_answers[q.id] = selected
+
+            if selected == q.correct_answer:
+                score += 1
+
+    return render(
+        request,
+        "mock_test.html",
+        {
+            "questions": questions,
+            "score": score,
+            "total": total,
+            "submitted": submitted,
+            "submitted_answers": submitted_answers,  # ✅ KEY FIX
+        }
+    )
+
+
