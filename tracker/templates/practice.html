@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if submitted %}
+<div class="alert alert-success">
+    <strong>Result:</strong> You scored {{ score }} out of {{ total }}
+</div>
+{% endif %}
+
+
+<h4 class="mb-3">{{ section.name }} – Practice Questions</h4>
+
+{% if questions %}
+<form method="POST">
+    {% csrf_token %}
+
+    {% for q in questions %}
+    <div class="card mb-4 p-3">
+        <p><strong>Q{{ forloop.counter }}. {{ q.question }}</strong></p>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="A">
+            <label class="form-check-label">{{ q.option_a }}</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="B">
+            <label class="form-check-label">{{ q.option_b }}</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="C">
+            <label class="form-check-label">{{ q.option_c }}</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="q{{ q.id }}" value="D">
+            <label class="form-check-label">{{ q.option_d }}</label>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not submitted %}
+<button type="submit" class="btn btn-primary">
+    Submit Answers
+</button>
+{% endif %}
+
+</form>
+{% else %}
+<p class="text-muted">No questions available for this section.</p>
+{% endif %}
+
+{% endblock %}

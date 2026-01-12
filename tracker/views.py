@@ -54,3 +54,41 @@ from .models import Section
 def dashboard_view(request):
     sections = Section.objects.all()
     return render(request, "dashboard.html", {"sections": sections})
+
+from .models import PracticeQuestion, Section, Progress
+
+def practice_view(request, section_id):
+    section = Section.objects.get(id=section_id)
+    questions = PracticeQuestion.objects.filter(section=section)
+
+    score = 0
+    total = questions.count()
+    submitted = False
+
+    if request.method == "POST":
+        submitted = True
+
+        for q in questions:
+            selected = request.POST.get(f"q{q.id}")
+            if selected == q.correct_answer:
+                score += 1
+
+        # ✅ THIS IS THE IMPORTANT PART YOU ASKED ABOUT
+        Progress.objects.create(
+            user=request.user,
+            section=section,
+            attempted=total,
+            correct=score
+        )
+
+    return render(
+        request,
+        "practice.html",
+        {
+            "section": section,
+            "questions": questions,
+            "score": score,
+            "total": total,
+            "submitted": submitted
+        }
+    )
