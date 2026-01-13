@@ -8,6 +8,8 @@ urlpatterns = [
     path("dashboard/", views.dashboard_view, name="dashboard"),
     path("practice/<int:section_id>/", views.practice_view, name="practice"),
     path("mock-test/", views.mock_test_view, name="mock_test"),
+    path("upload-jd/", views.upload_jd_view, name="upload_jd"),
+    path("jd-mock-test/", views.jd_mock_test_view, name="jd_mock_test"),
 
 ]
 

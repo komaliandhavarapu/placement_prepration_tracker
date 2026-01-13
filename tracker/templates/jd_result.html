@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>JD Based Preparation Plan</h2>
+
+<p>Recommended sections based on your Job Description:</p>
+
+{% for section in sections %}
+<div class="card p-3 mb-3">
+    <h5>{{ section.name }}</h5>
+
+    <a href="{% url 'practice' section.id %}" class="btn btn-primary">
+        Start Practice
+    </a>
+</div>
+{% endfor %}
+
+<a href="{% url 'jd_mock_test' %}" class="btn btn-danger mt-3">
+    Take JD-Based Mock Test
+</a>
+
+{% endblock %}

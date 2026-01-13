@@ -3,107 +3,73 @@
 
 <div class="container mt-4">
 
-    <h3>📄 Full Length Mock Test</h3>
+    <h3>Full Length Mock Test</h3>
 
+    <!-- AFTER SUBMIT -->
     {% if submitted %}
-    <div class="alert alert-success mt-3">
-        Result: You scored {{ score }} out of {{ total }}
-    </div>
-    {% endif %}
-
-    <form method="post">
-        {% csrf_token %}
-
-        {% for q in questions %}
-        <div class="card p-3 mb-3">
-
-            <strong>
-                Q{{ forloop.counter }}. {{ q.question }}
-            </strong>
-            <br><br>
-
-            <!-- OPTION A -->
-            <div
-                {% if submitted %}
-                    {% if q.correct_answer == "a" %}
-                        style="color: green; font-weight: bold;"
-                    {% elif submitted_answers.q.id == "a" %}
-                        style="color: red;"
-                    {% endif %}
-                {% endif %}
-            >
-                <input type="radio"
-                       name="q{{ q.id }}"
-                       value="a"
-                       {% if submitted %}disabled{% endif %}
-                >
-                {{ q.option_a }}
-            </div>
-
-            <!-- OPTION B -->
-            <div
-                {% if submitted %}
-                    {% if q.correct_answer == "b" %}
-                        style="color: green; font-weight: bold;"
-                    {% elif submitted_answers.q.id == "b" %}
-                        style="color: red;"
-                    {% endif %}
-                {% endif %}
-            >
-                <input type="radio"
-                       name="q{{ q.id }}"
-                       value="b"
-                       {% if submitted %}disabled{% endif %}
-                >
-                {{ q.option_b }}
-            </div>
-
-            <!-- OPTION C -->
-            <div
-                {% if submitted %}
-                    {% if q.correct_answer == "c" %}
-                        style="color: green; font-weight: bold;"
-                    {% elif submitted_answers.q.id == "c" %}
-                        style="color: red;"
-                    {% endif %}
-                {% endif %}
-            >
-                <input type="radio"
-                       name="q{{ q.id }}"
-                       value="c"
-                       {% if submitted %}disabled{% endif %}
-                >
-                {{ q.option_c }}
-            </div>
-
-            <!-- OPTION D -->
-            <div
-                {% if submitted %}
-                    {% if q.correct_answer == "d" %}
-                        style="color: green; font-weight: bold;"
-                    {% elif submitted_answers.q.id == "d" %}
-                        style="color: red;"
-                    {% endif %}
-                {% endif %}
-            >
-                <input type="radio"
-                       name="q{{ q.id }}"
-                       value="d"
-                       {% if submitted %}disabled{% endif %}
-                >
-                {{ q.option_d }}
-            </div>
-
+        <div class="alert alert-success mt-4">
+            <strong>Result:</strong> You scored {{ score }} out of {{ total }}
         </div>
-        {% endfor %}
 
-        {% if not submitted %}
-        <button type="submit" class="btn btn-danger">
-            Submit Mock Test
-        </button>
-        {% endif %}
+        <div class="mt-4 d-flex gap-3">
+    <!-- Next Mock -->
+    <a href="{% url 'mock_test' %}" class="btn btn-danger">
+        Proceed to Next Mock
+    </a>
 
-    </form>
+    <!-- Back to Dashboard -->
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+        Back to Dashboard
+    </a>
+</div>
+
+
+    <!-- BEFORE SUBMIT -->
+    {% else %}
+        <div class="alert alert-warning mt-3">
+            ⏱ Time Remaining: 15 minutes
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% for q in questions %}
+                <div class="card p-3 mb-4">
+                    <strong>
+                        Q{{ forloop.counter }}. {{ q.question }}
+                    </strong>
+
+                    <div class="mt-3">
+
+                        <label class="option-row">
+                            <input type="radio" name="q{{ q.id }}" value="a">
+                            <span>{{ q.option_a }}</span>
+                        </label>
+
+                        <label class="option-row">
+                            <input type="radio" name="q{{ q.id }}" value="b">
+                            <span>{{ q.option_b }}</span>
+                        </label>
+
+                        <label class="option-row">
+                            <input type="radio" name="q{{ q.id }}" value="c">
+                            <span>{{ q.option_c }}</span>
+                        </label>
+
+                        <label class="option-row">
+                            <input type="radio" name="q{{ q.id }}" value="d">
+                            <span>{{ q.option_d }}</span>
+                        </label>
+
+                    </div>
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-danger">
+                Submit Mock Test
+            </button>
+        </form>
+    {% endif %}
 
 </div>
 

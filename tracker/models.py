@@ -32,3 +32,12 @@ class Progress(models.Model):
         return f"{self.user.username} - {self.section.name}"
 
 
+class JobDescription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    pdf = models.FileField(upload_to="jds/")
+    extracted_text = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

@@ -136,4 +136,61 @@ def mock_test_view(request):
         }
     )
 
+from .utils import extract_text_from_pdf, map_jd_to_sections
+from .models import Section
+
+@login_required
+def upload_jd_view(request):
+    if request.method == "POST":
+        pdf = request.FILES.get("jd_pdf")
+
+        jd_text = extract_text_from_pdf(pdf)
+        section_names = map_jd_to_sections(jd_text)
+
+        sections = Section.objects.filter(name__in=section_names)
+
+        request.session["jd_sections"] = list(sections.values_list("id", flat=True))
+
+        return render(request, "jd_result.html", {
+            "sections": sections
+        })
+
+    return render(request, "upload_jd.html")
+
+@login_required
+def jd_mock_test_view(request):
+    section_ids = request.session.get("jd_sections", [])
+
+    questions = PracticeQuestion.objects.filter(
+        section_id__in=section_ids
+    ).order_by("?")[:12]
+
+    score = 0
+    submitted = False
+
+    if request.method == "POST":
+        submitted = True
+        for q in questions:
+            if request.POST.get(f"q{q.id}") == q.correct_answer:
+                score += 1
+
+    return render(request, "mock_test.html", {
+        "questions": questions,
+        "score": score,
+        "total": len(questions),
+        "submitted": submitted
+    })
+from .utils import extract_relevant_sections
+from .models import Section
+
+def jd_result_view(request):
+    jd_text = request.session.get("jd_text", "")
+
+    section_names = extract_relevant_sections(jd_text)
+
+    sections = Section.objects.filter(name__in=section_names)
+
+    return render(request, "jd_result.html", {
+        "sections": sections
+    })
 

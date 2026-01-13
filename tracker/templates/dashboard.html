@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
+<a href="{% url 'upload_jd' %}" class="btn btn-success mb-4">
+    Upload Job Description (PDF)
+</a>
+
 <div class="container mt-4">
     <a href="{% url 'mock_test' %}" class="btn btn-danger mb-4">
     Take Full Mock Test
