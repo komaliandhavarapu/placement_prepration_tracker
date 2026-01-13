@@ -1,58 +1,81 @@
 {% extends "base.html" %}
 
 {% block content %}
-<a href="{% url 'upload_jd' %}" class="btn btn-success mb-4">
-    Upload Job Description (PDF)
-</a>
 
-<div class="container mt-4">
-    <a href="{% url 'mock_test' %}" class="btn btn-danger mb-4">
+<a href="{% url 'mock_test' %}" class="btn btn-danger mb-3">
     Take Full Mock Test
-</a>
+</a><BR>
+
+<a href="{% url 'upload_jd' %}" class="btn btn-outline-primary">
+        Upload Job Description
+</a><BR><br>
 
 
-    <h2 class="mb-2">Welcome, {{ request.user.username }} 👋</h2>
-    <p class="text-muted mb-4">
-        Choose a section and start preparing for your placements
-    </p>
+<h2>Welcome, {{ request.user.username }} 👋</h2>
+<p class="text-muted">Choose a section and start preparing for your placements</p>
 
-    <div class="row">
-        {% for section in sections %}
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body d-flex flex-column">
-
-                    <h5 class="card-title">{{ section.name }}</h5>
-                    <p class="card-text text-muted">
-                        Practice questions curated for {{ section.name }}
-                    </p>
-
-                    <!-- Start Practice Button -->
-                    <a href="{% url 'practice' section.id %}"
-                       class="btn btn-primary btn-sm mt-auto mb-2">
-                        Start Practice
-                    </a>
-
-                    
-
-                </div>
-            </div>
+<!-- Sections -->
+<div class="row mt-4">
+    {% for section in sections %}
+    <div class="col-md-4 mb-4">
+        <div class="card p-3">
+            <h5>{{ section.name }}</h5>
+            <p class="text-muted">Practice questions curated for {{ section.name }}</p>
+            <a href="{% url 'practice' section.id %}" class="btn btn-primary">
+                Start Practice
+            </a>
         </div>
-        {% endfor %}
     </div>
-
-    {% if progress %}
-    <hr>
-    <h5 class="mt-4">Your Recent Progress</h5>
-    <ul class="list-group mt-2">
-        {% for p in progress %}
-        <li class="list-group-item d-flex justify-content-between">
-            <span>{{ p.section.name }}</span>
-            <strong>{{ p.correct }}/{{ p.attempted }}</strong>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-
+    {% endfor %}
 </div>
+
+<hr class="my-4">
+<hr class="my-4">
+
+<h4>📈 Accuracy Progress</h4>
+
+{% if accuracy_data %}
+<canvas id="accuracyChart" height="120"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const accuracyData = JSON.parse('{{ accuracy_data|escapejs }}');
+    const labels = JSON.parse('{{ labels|escapejs }}');
+
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Accuracy (%)',
+                data: accuracyData,
+                borderColor: '#4f46e5',
+                backgroundColor: 'rgba(79,70,229,0.15)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
+{% if accuracy_data  %}
+<p>Your accuracy progress is displayed above. Keep practicing to improve your skills!</p>
+
+{% else %}
+<p class="text-muted">Attempt a mock test to see your accuracy progress.</p>
+{% endif %}
+
+
 {% endblock %}

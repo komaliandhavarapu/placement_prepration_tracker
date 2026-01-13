@@ -22,14 +22,17 @@ class PracticeQuestion(models.Model):
         return self.question[:50]
 
 
+from django.utils import timezone
+
 class Progress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE)
-    attempted = models.IntegerField()
-    correct = models.IntegerField()
+    score = models.IntegerField()
+    total_questions = models.IntegerField()
+    accuracy = models.FloatField()
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"{self.user.username} - {self.section.name}"
+        return f"{self.user.username} - {self.accuracy}%"
 
 
 class JobDescription(models.Model):
@@ -41,3 +44,16 @@ class JobDescription(models.Model):
 
     def __str__(self):
         return self.title
+from django.db import models
+from django.contrib.auth.models import User
+
+class MockTestAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    score = models.IntegerField()
+    total_questions = models.IntegerField()
+    accuracy = models.FloatField()
+    attempted_on = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} | {self.accuracy}%"
+

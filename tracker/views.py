@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from .models import MockTestAttempt
 
 
 def register_view(request):
@@ -46,14 +47,30 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
-from django.contrib.auth.decorators import login_required
-from .models import Section
+from tracker.models import Progress
+from django.utils import timezone
+from datetime import timedelta
+import json
 
-
-@login_required
 def dashboard_view(request):
     sections = Section.objects.all()
-    return render(request, "dashboard.html", {"sections": sections})
+
+    last_7_days = timezone.now() - timedelta(days=7)
+
+    progress_qs = Progress.objects.filter(
+        user=request.user,
+        created_at__gte=last_7_days
+    ).order_by('created_at')
+
+    accuracy_data = [p.accuracy for p in progress_qs]
+    labels = [p.created_at.strftime('%d %b') for p in progress_qs]
+
+    return render(request, "dashboard.html", {
+        "sections": sections,
+        "accuracy_data": json.dumps(accuracy_data),
+        "labels": json.dumps(labels),
+    })
+
 
 from django.contrib.auth.decorators import login_required
 from .models import PracticeQuestion, Section, Progress
@@ -114,15 +131,27 @@ def mock_test_view(request):
     submitted = False
     submitted_answers = {}
 
+    from .models import Progress
+
     if request.method == "POST":
+        score = 0
+        for q in questions:
+             selected = request.POST.get(f"q{q.id}")
+             if selected == q.correct_answer:
+                 score += 1
+
+        accuracy = (score / total) * 100 if total > 0 else 0
+
+        Progress.objects.create(
+                user=request.user,
+                score=score,
+                total_questions=total,
+                accuracy=accuracy
+        )
+
+
         submitted = True
 
-        for q in questions:
-            selected = request.POST.get(f"q{q.id}")
-            submitted_answers[q.id] = selected
-
-            if selected == q.correct_answer:
-                score += 1
 
     return render(
         request,
@@ -173,7 +202,6 @@ def jd_mock_test_view(request):
         for q in questions:
             if request.POST.get(f"q{q.id}") == q.correct_answer:
                 score += 1
-
     return render(request, "mock_test.html", {
         "questions": questions,
         "score": score,
