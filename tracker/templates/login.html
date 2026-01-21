@@ -1,46 +1,147 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card p-4">
-            <h4 class="text-center mb-3">Welcome Back 👋</h4>
-            <p class="text-center text-muted mb-4">
-                Login to continue your placement preparation
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Placement Tracker</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-50 text-slate-900 antialiased font-sans h-screen flex overflow-hidden">
+
+    <!-- Left: Branding & Visuals -->
+    <div class="hidden lg:flex lg:w-1/2 bg-blue-600 flex-col justify-between p-12 relative overflow-hidden">
+        <div class="relative z-10 flex items-center gap-3 text-white">
+            <div
+                class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
+                <i class="fa-solid fa-chart-simple text-xl"></i>
+            </div>
+            <span class="font-bold text-2xl tracking-tight">PlacementTracker</span>
+        </div>
+
+        <div class="relative z-10 text-white max-w-lg">
+            <h1 class="text-4xl font-bold leading-tight mb-6">Master your placement preparation with data-driven
+                insights.</h1>
+            <p class="text-blue-100 text-lg leading-relaxed mb-8">
+                Join thousands of students who are improving their aptitude and technical skills with our intelligent
+                tracking system.
             </p>
 
+            <div class="flex gap-4">
+                <div class="flex -space-x-2">
+                    <div class="w-10 h-10 rounded-full border-2 border-blue-600 bg-gray-200"></div>
+                    <div class="w-10 h-10 rounded-full border-2 border-blue-600 bg-gray-300"></div>
+                    <div class="w-10 h-10 rounded-full border-2 border-blue-600 bg-gray-400"></div>
+                </div>
+                <div class="flex flex-col justify-center">
+                    <span class="font-bold text-sm">Top Rated Platform</span>
+                    <span class="text-xs text-blue-200">Trusted by students</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10 text-blue-200 text-sm font-medium">
+            &copy; 2024 PlacementTracker AI
+        </div>
+
+        <!-- Decorative Pattern -->
+        <div class="absolute inset-0 opacity-10 pattern-dots"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-50"></div>
+    </div>
+
+    <!-- Right: Login Form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto">
+        <div class="w-full max-w-md">
+            <div class="text-center lg:text-left mb-10">
+                <h2 class="text-3xl font-bold text-gray-900">Welcome back</h2>
+                <p class="text-gray-500 mt-2">Please enter your details to sign in.</p>
+            </div>
+
             {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-danger">{{ message }}</div>
-                {% endfor %}
+            {% for message in messages %}
+            <div
+                class="p-4 mb-6 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ message }}
+            </div>
+            {% endfor %}
             {% endif %}
 
-            <form method="POST">
+            <form method="POST" class="space-y-5">
                 {% csrf_token %}
 
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control" required>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-regular fa-user"></i>
+                        </div>
+                        <input type="text" name="username" required
+                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
+                            placeholder="Enter your username">
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <input type="password" name="password" required
+                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
+                            placeholder="••••••••">
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary w-100 mt-2">
-                    Login
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox"
+                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm text-gray-600">Remember for 30 days</span>
+                    </label>
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700">Forgot password?</a>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform active:scale-95">
+                    Sign in
                 </button>
             </form>
 
-            <p class="text-center mt-4 mb-0">
-                New here?
-                <a href="{% url 'register' %}" class="text-decoration-none">
-                    Create an account
-                </a>
-            </p>
+            <div class="mt-8 text-center text-sm">
+                <span class="text-gray-500">Don't have an account?</span>
+                <a href="{% url 'register' %}" class="font-medium text-blue-600 hover:text-blue-700 ml-1">Create an
+                    account</a>
+            </div>
         </div>
     </div>
-</div>
 
-{% endblock %}
+</body>
+
+</html>
