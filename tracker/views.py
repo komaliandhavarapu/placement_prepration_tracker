@@ -47,29 +47,28 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
-from tracker.models import Progress
-from django.utils import timezone
-from datetime import timedelta
-import json
+from django.contrib.auth.decorators import login_required
+from .models import Section, Progress
 
+@login_required(login_url='login')
 def dashboard_view(request):
+
+    # Fetch all sections
     sections = Section.objects.all()
 
-    last_7_days = timezone.now() - timedelta(days=7)
+    # Fetch progress only for logged-in user
+    progress_qs = Progress.objects.filter(user=request.user).order_by("created_at")
 
-    progress_qs = Progress.objects.filter(
-        user=request.user,
-        created_at__gte=last_7_days
-    ).order_by('created_at')
-
+    # Chart Data
+    labels = [f"Attempt {i+1}" for i in range(len(progress_qs))]
     accuracy_data = [p.accuracy for p in progress_qs]
-    labels = [p.created_at.strftime('%d %b') for p in progress_qs]
 
     return render(request, "dashboard.html", {
         "sections": sections,
-        "accuracy_data": json.dumps(accuracy_data),
-        "labels": json.dumps(labels),
+        "labels": labels,
+        "accuracy_data": accuracy_data
     })
+
 
 
 from django.contrib.auth.decorators import login_required
