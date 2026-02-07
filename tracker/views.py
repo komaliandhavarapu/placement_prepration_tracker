@@ -65,7 +65,13 @@ def logout_view(request):
 # -------------------- DASHBOARD --------------------
 
 @login_required
+from django.contrib.auth.decorators import login_required
+from .models import Section, Progress
+
+@login_required(login_url='login')
 def dashboard_view(request):
+
+    # Fetch all sections
     sections = Section.objects.all()
 
     last_7_days = timezone.now() - timedelta(days=7)
@@ -74,17 +80,26 @@ def dashboard_view(request):
         created_at__gte=last_7_days
     ).order_by("created_at")
 
+    # Fetch progress only for logged-in user
+    progress_qs = Progress.objects.filter(user=request.user).order_by("created_at")
+
+
+    # Chart Data
+    labels = [f"Attempt {i+1}" for i in range(len(progress_qs))]
     accuracy_data = [p.accuracy for p in progress_qs]
     labels = [p.created_at.strftime("%d %b") for p in progress_qs]
 
     return render(request, "dashboard.html", {
         "sections": sections,
-        "accuracy_data": json.dumps(accuracy_data),
-        "labels": json.dumps(labels),
+        "labels": labels,
+        "accuracy_data": accuracy_data
     })
 
 
 # -------------------- PRACTICE --------------------
+
+from django.contrib.auth.decorators import login_required
+from .models import PracticeQuestion, Section, Progress
 
 @login_required
 def practice_view(request, section_id):
