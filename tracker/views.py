@@ -2,8 +2,22 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import MockTestAttempt
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from datetime import timedelta
+import json
+import random
 
+from .models import (
+    PracticeQuestion,
+    Section,
+    Progress,
+    MockTestAttempt,
+)
+from .utils import extract_text_from_pdf, map_jd_to_sections, extract_relevant_sections
+
+
+# -------------------- AUTH --------------------
 
 def register_view(request):
     if request.method == "POST":
@@ -33,12 +47,12 @@ def login_view(request):
 
         user = authenticate(request, username=username, password=password)
 
-        if user is not None:
+        if user:
             login(request, user)
             return redirect("dashboard")
-        else:
-            messages.error(request, "Invalid credentials")
-            return redirect("login")
+
+        messages.error(request, "Invalid credentials")
+        return redirect("login")
 
     return render(request, "login.html")
 
@@ -47,23 +61,21 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
-from tracker.models import Progress
-from django.utils import timezone
-from datetime import timedelta
-import json
 
+# -------------------- DASHBOARD --------------------
+
+@login_required
 def dashboard_view(request):
     sections = Section.objects.all()
 
     last_7_days = timezone.now() - timedelta(days=7)
-
     progress_qs = Progress.objects.filter(
         user=request.user,
         created_at__gte=last_7_days
-    ).order_by('created_at')
+    ).order_by("created_at")
 
     accuracy_data = [p.accuracy for p in progress_qs]
-    labels = [p.created_at.strftime('%d %b') for p in progress_qs]
+    labels = [p.created_at.strftime("%d %b") for p in progress_qs]
 
     return render(request, "dashboard.html", {
         "sections": sections,
@@ -72,8 +84,7 @@ def dashboard_view(request):
     })
 
 
-from django.contrib.auth.decorators import login_required
-from .models import PracticeQuestion, Section, Progress
+# -------------------- PRACTICE --------------------
 
 @login_required
 def practice_view(request, section_id):
@@ -83,7 +94,7 @@ def practice_view(request, section_id):
     score = 0
     total = questions.count()
     submitted = False
-    answers = {}  # store user's answers
+    answers = {}
 
     if request.method == "POST":
         submitted = True
@@ -95,78 +106,69 @@ def practice_view(request, section_id):
             if selected and selected.upper() == q.correct_answer.upper():
                 score += 1
 
+        accuracy = (score / total) * 100 if total > 0 else 0
+
         Progress.objects.create(
             user=request.user,
-            section=section,
-            attempted=total,
-            correct=score
+            score=score,
+            total_questions=total,
+            accuracy=accuracy
         )
 
-    return render(
-        request,
-        "practice.html",
-        {
-            "section": section,
-            "questions": questions,
-            "score": score,
-            "total": total,
-            "submitted": submitted,
-            "answers": answers,   # 🔥 IMPORTANT
-        }
-    )
+    return render(request, "practice.html", {
+        "section": section,
+        "questions": questions,
+        "score": score,
+        "total": total,
+        "submitted": submitted,
+        "answers": answers,
+    })
 
 
-import random
-from django.contrib.auth.decorators import login_required
-from .models import PracticeQuestion
+# -------------------- MOCK TEST --------------------
 
 @login_required
 def mock_test_view(request):
-    questions = list(PracticeQuestion.objects.all())
-    random.shuffle(questions)
-    questions = questions[:12]  # 12 questions
+
+    if request.method == "GET":
+        questions = list(PracticeQuestion.objects.all())
+        random.shuffle(questions)
+        questions = questions[:12]
+        request.session["mock_q_ids"] = [q.id for q in questions]
+
+    else:
+        q_ids = request.session.get("mock_q_ids", [])
+        questions = PracticeQuestion.objects.filter(id__in=q_ids)
 
     score = 0
     total = len(questions)
     submitted = False
-    submitted_answers = {}
-
-    from .models import Progress
 
     if request.method == "POST":
-        score = 0
+        submitted = True
+
         for q in questions:
-             selected = request.POST.get(f"q{q.id}")
-             if selected == q.correct_answer:
-                 score += 1
+            if request.POST.get(f"q{q.id}") == q.correct_answer:
+                score += 1
 
         accuracy = (score / total) * 100 if total > 0 else 0
 
         Progress.objects.create(
-                user=request.user,
-                score=score,
-                total_questions=total,
-                accuracy=accuracy
+            user=request.user,
+            score=score,
+            total_questions=total,
+            accuracy=accuracy
         )
 
+    return render(request, "mock_test.html", {
+        "questions": questions,
+        "score": score,
+        "total": total,
+        "submitted": submitted,
+    })
 
-        submitted = True
 
-
-    return render(
-        request,
-        "mock_test.html",
-        {
-            "questions": questions,
-            "score": score,
-            "total": total,
-            "submitted": submitted,
-            "submitted_answers": submitted_answers,  # ✅ KEY FIX
-        }
-    )
-
-from .utils import extract_text_from_pdf, map_jd_to_sections
-from .models import Section
+# -------------------- JD UPLOAD --------------------
 
 @login_required
 def upload_jd_view(request):
@@ -177,14 +179,15 @@ def upload_jd_view(request):
         section_names = map_jd_to_sections(jd_text)
 
         sections = Section.objects.filter(name__in=section_names)
-
         request.session["jd_sections"] = list(sections.values_list("id", flat=True))
+        request.session["jd_text"] = jd_text
 
         return render(request, "jd_result.html", {
             "sections": sections
         })
 
     return render(request, "upload_jd.html")
+
 
 @login_required
 def jd_mock_test_view(request):
@@ -202,23 +205,20 @@ def jd_mock_test_view(request):
         for q in questions:
             if request.POST.get(f"q{q.id}") == q.correct_answer:
                 score += 1
+
     return render(request, "mock_test.html", {
         "questions": questions,
         "score": score,
         "total": len(questions),
-        "submitted": submitted
+        "submitted": submitted,
     })
-from .utils import extract_relevant_sections
-from .models import Section
+
 
 def jd_result_view(request):
     jd_text = request.session.get("jd_text", "")
-
     section_names = extract_relevant_sections(jd_text)
-
     sections = Section.objects.filter(name__in=section_names)
 
     return render(request, "jd_result.html", {
         "sections": sections
     })
-
