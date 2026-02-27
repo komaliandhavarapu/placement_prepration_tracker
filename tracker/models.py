@@ -26,6 +26,7 @@ from django.utils import timezone
 
 class Progress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True)
     score = models.IntegerField()
     total_questions = models.IntegerField()
     accuracy = models.FloatField()
@@ -56,4 +57,3 @@ class MockTestAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} | {self.accuracy}%"
-

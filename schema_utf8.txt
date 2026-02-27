@@ -1,0 +1,11 @@
+Schema:
+CREATE TABLE "tracker_progress" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "user_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED, "score" integer NOT NULL, "accuracy" real NOT NULL, "created_at" datetime NOT NULL, "total_questions" integer NOT NULL, "section_id" bigint NULL REFERENCES "tracker_section" ("id") DEFERRABLE INITIALLY DEFERRED)
+
+Columns:
+(0, 'id', 'integer', 1, None, 1)
+(1, 'user_id', 'integer', 1, None, 0)
+(2, 'score', 'integer', 1, None, 0)
+(3, 'accuracy', 'real', 1, None, 0)
+(4, 'created_at', 'datetime', 1, None, 0)
+(5, 'total_questions', 'integer', 1, None, 0)
+(6, 'section_id', 'bigint', 0, None, 0)

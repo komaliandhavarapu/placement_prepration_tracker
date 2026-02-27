@@ -6,7 +6,6 @@ urlpatterns = [
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
-
     path("practice/<int:section_id>/", views.practice_view, name="practice"),
     path("mock-test/", views.mock_test_view, name="mock_test"),
     path("upload-jd/", views.upload_jd_view, name="upload_jd"),

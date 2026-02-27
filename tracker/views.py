@@ -63,7 +63,10 @@ def logout_view(request):
 
 
 # -------------------- DASHBOARD --------------------
-
+from django.utils import timezone
+from datetime import timedelta
+from .models import Progress
+import json
 @login_required
 def dashboard_view(request):
     sections = Section.objects.all()
@@ -72,48 +75,84 @@ def dashboard_view(request):
     progress_qs = Progress.objects.filter(
         user=request.user,
         created_at__gte=last_7_days
-    ).order_by("created_at")
+    )
 
-    accuracy_data = [p.accuracy for p in progress_qs]
-    labels = [p.created_at.strftime("%d %b") for p in progress_qs]
+    labels = []
+    accuracy_data = []
+    marks_data = []
+
+    weakest_section = None
+    lowest_accuracy = 101
+
+    for section in sections:
+        section_progress = progress_qs.filter(section=section)
+        if section_progress.exists():
+            avg_accuracy = sum(p.accuracy for p in section_progress) / section_progress.count()
+            total_score = sum(p.score for p in section_progress)
+
+            labels.append(section.name)
+            accuracy_data.append(round(avg_accuracy, 2))
+            marks_data.append(total_score)
+
+            if avg_accuracy < lowest_accuracy:
+                lowest_accuracy = avg_accuracy
+                weakest_section = section.name
+
+    if weakest_section:
+        suggestion = f"You need more practice in <span class=\"font-semibold text-white\">{weakest_section}</span>. Your accuracy was {round(lowest_accuracy, 1)}% in the last 7 days."
+    else:
+        suggestion = "Take some practice tests to get personalized insights and section-wise analytics!"
+
+    overall_accuracy = round(sum(accuracy_data) / len(accuracy_data), 2) if accuracy_data else 0
 
     return render(request, "dashboard.html", {
-        "sections": sections,
         "accuracy_data": json.dumps(accuracy_data),
+        "marks_data": json.dumps(marks_data),
         "labels": json.dumps(labels),
+        "sections": sections,
+        "suggestion": suggestion,
+        "overall_accuracy": overall_accuracy
     })
 
 
 # -------------------- PRACTICE --------------------
 
+import random
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import PracticeQuestion, Section
+
 @login_required
 def practice_view(request, section_id):
-    section = Section.objects.get(id=section_id)
-    questions = PracticeQuestion.objects.filter(section=section)
+
+    section = get_object_or_404(Section, id=section_id)
+
+    questions = list(PracticeQuestion.objects.filter(section=section))
+    random.shuffle(questions)
+    questions = questions[:10]
 
     score = 0
-    total = questions.count()
+    total = len(questions)
     submitted = False
-    answers = {}
 
     if request.method == "POST":
-        submitted = True
 
         for q in questions:
             selected = request.POST.get(f"q{q.id}")
-            answers[q.id] = selected
-
-            if selected and selected.upper() == q.correct_answer.upper():
+            if selected == q.correct_answer:
                 score += 1
 
         accuracy = (score / total) * 100 if total > 0 else 0
-
+        from .models import Progress
         Progress.objects.create(
             user=request.user,
+            section=section,
             score=score,
             total_questions=total,
             accuracy=accuracy
         )
+
+        submitted = True  # ✅ Show Score Only
 
     return render(request, "practice.html", {
         "section": section,
@@ -121,44 +160,43 @@ def practice_view(request, section_id):
         "score": score,
         "total": total,
         "submitted": submitted,
-        "answers": answers,
     })
 
-
 # -------------------- MOCK TEST --------------------
+
+import random
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import PracticeQuestion
 
 @login_required
 def mock_test_view(request):
 
-    if request.method == "GET":
-        questions = list(PracticeQuestion.objects.all())
-        random.shuffle(questions)
-        questions = questions[:12]
-        request.session["mock_q_ids"] = [q.id for q in questions]
-
-    else:
-        q_ids = request.session.get("mock_q_ids", [])
-        questions = PracticeQuestion.objects.filter(id__in=q_ids)
+    questions = list(PracticeQuestion.objects.all())
+    random.shuffle(questions)
+    questions = questions[:12]
 
     score = 0
     total = len(questions)
     submitted = False
 
     if request.method == "POST":
-        submitted = True
 
         for q in questions:
-            if request.POST.get(f"q{q.id}") == q.correct_answer:
+            selected = request.POST.get(f"q{q.id}")
+            if selected == q.correct_answer:
                 score += 1
 
         accuracy = (score / total) * 100 if total > 0 else 0
-
-        Progress.objects.create(
+        from .models import MockTestAttempt
+        MockTestAttempt.objects.create(
             user=request.user,
             score=score,
             total_questions=total,
             accuracy=accuracy
         )
+
+        submitted = True   # ✅ Score will show
 
     return render(request, "mock_test.html", {
         "questions": questions,
@@ -205,6 +243,15 @@ def jd_mock_test_view(request):
         for q in questions:
             if request.POST.get(f"q{q.id}") == q.correct_answer:
                 score += 1
+                
+        accuracy = (score / len(questions)) * 100 if len(questions) > 0 else 0
+        from .models import MockTestAttempt
+        MockTestAttempt.objects.create(
+            user=request.user,
+            score=score,
+            total_questions=len(questions),
+            accuracy=accuracy
+        )
 
     return render(request, "mock_test.html", {
         "questions": questions,

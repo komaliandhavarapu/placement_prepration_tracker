@@ -146,7 +146,7 @@
                             <p class="text-sm text-slate-500 font-medium">Avg. Accuracy</p>
                             <h3 class="text-2xl font-bold text-slate-900">
                                 {% if accuracy_data %}
-                                {{ accuracy_data|last|floatformat:0 }}%
+                                {{ overall_accuracy }}%
                                 {% else %}
                                 0%
                                 {% endif %}
@@ -156,7 +156,7 @@
                     </div>
                     <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                         <div class="bg-primary-600 h-full rounded-full"
-                            style="width: {% if accuracy_data %}{{ accuracy_data|last }}{% else %}0{% endif %}%"></div>
+                            style="width: {% if accuracy_data %}{{ overall_accuracy }}{% else %}0{% endif %}%"></div>
                     </div>
                 </div>
 
@@ -263,8 +263,7 @@
                                 <i class="fa-solid fa-wand-magic-sparkles text-yellow-400"></i> AI Insights
                             </h4>
                             <p class="text-slate-300 text-sm mb-4 leading-relaxed">
-                                You need more practice in <span class="font-semibold text-white">Logical
-                                    Reasoning</span>. Your accuracy dropped by 5% last week.
+                                {{ suggestion|safe }}
                             </p>
                             <button
                                 class="w-full py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-colors">
@@ -307,36 +306,49 @@
 
     <!-- Initialization Scripts -->
     {% if accuracy_data %}
+    <canvas id="accuracyChart"></canvas>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const accuracyData = JSON.parse('{{ accuracy_data|escapejs }}');
+            const marksData = JSON.parse('{{ marks_data|escapejs }}');
             const labels = JSON.parse('{{ labels|escapejs }}');
             const ctx = document.getElementById('accuracyChart').getContext('2d');
 
             new Chart(ctx, {
-                type: 'line',
+                type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Accuracy',
-                        data: accuracyData,
-                        borderColor: '#2563eb', // primary-600
-                        backgroundColor: 'rgba(37, 99, 235, 0.05)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#2563eb',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        fill: true,
-                    }]
+                    datasets: [
+                        {
+                            label: 'Average Accuracy (%)',
+                            data: accuracyData,
+                            backgroundColor: '#2563eb', // primary-600
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'Marks Obtained',
+                            data: marksData,
+                            backgroundColor: '#60a5fa', // lighter blue
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 6
+                            }
+                        },
                         tooltip: {
                             backgroundColor: '#1e293b',
                             padding: 12,
@@ -349,7 +361,6 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 100,
                             grid: {
                                 color: '#f1f5f9',
                             },
