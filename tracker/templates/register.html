@@ -33,42 +33,42 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-gray-50 text-slate-900 antialiased font-sans h-screen flex overflow-hidden">
+<body class="bg-[#f8f5ff] text-slate-600 antialiased font-sans h-screen flex overflow-hidden">
 
     <!-- Left: Branding & Visuals -->
-    <div class="hidden lg:flex lg:w-1/2 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
-        <div class="relative z-10 flex items-center gap-3 text-white">
+    <div class="hidden lg:flex lg:w-1/2 bg-[#f8f5ff] flex-col justify-between p-12 relative overflow-hidden">
+        <div class="relative z-10 flex items-center gap-3 text-slate-900">
             <div
-                class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
+                class="w-10 h-10 bg-white shadow-[0_4px_20px_-4px_rgba(147,51,234,0.1)] rounded-3xl sm:m-8 overflow-hidden/10 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/20">
                 <i class="fa-solid fa-chart-simple text-xl"></i>
             </div>
             <span class="font-bold text-2xl tracking-tight">PlacementTracker</span>
         </div>
 
-        <div class="relative z-10 text-white max-w-lg">
+        <div class="relative z-10 text-slate-900 max-w-lg">
             <h1 class="text-4xl font-bold leading-tight mb-6">Start your journey today.</h1>
-            <p class="text-slate-300 text-lg leading-relaxed mb-8">
+            <p class="text-slate-600 text-lg leading-relaxed mb-8">
                 Create your student profile to access mock tests, track your progress, and get AI-powered
                 recommendations.
             </p>
 
             <div class="space-y-4">
-                <div class="flex items-center gap-3 text-slate-200">
-                    <i class="fa-solid fa-check-circle text-blue-500"></i>
+                <div class="flex items-center gap-3 text-slate-600">
+                    <i class="fa-solid fa-check-circle text-purple-500"></i>
                     <span>Access to unlimited mock tests</span>
                 </div>
-                <div class="flex items-center gap-3 text-slate-200">
-                    <i class="fa-solid fa-check-circle text-blue-500"></i>
+                <div class="flex items-center gap-3 text-slate-600">
+                    <i class="fa-solid fa-check-circle text-purple-500"></i>
                     <span>Personalized performance analytics</span>
                 </div>
-                <div class="flex items-center gap-3 text-slate-200">
-                    <i class="fa-solid fa-check-circle text-blue-500"></i>
+                <div class="flex items-center gap-3 text-slate-600">
+                    <i class="fa-solid fa-check-circle text-purple-500"></i>
                     <span>Interview preparation resources</span>
                 </div>
             </div>
         </div>
 
-        <div class="relative z-10 text-slate-400 text-sm font-medium">
+        <div class="relative z-10 text-purple-600 text-sm font-medium">
             &copy; 2026 PlacementTracker AI
         </div>
 
@@ -80,17 +80,20 @@
     </div>
 
     <!-- Right: Register Form -->
-    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white overflow-y-auto">
-        <div class="w-full max-w-md my-auto">
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[#f8f5ff] relative overflow-y-auto">
+        <div class="absolute inset-0 opacity-20 pattern-grid" style="background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0); background-size: 24px 24px;"></div>
+        <div class="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-600 rounded-full blur-[150px] opacity-10 transform translate-x-1/3 translate-y-1/3 pointer-events-none z-0"></div>
+        <div class="absolute top-0 left-0 w-[400px] h-[400px] bg-blue-600 rounded-full blur-[150px] opacity-10 transform -translate-x-1/3 -translate-y-1/3 pointer-events-none z-0"></div>
+        <div class="w-full max-w-md my-auto relative z-10">
             <div class="text-center lg:text-left mb-8">
-                <h2 class="text-3xl font-bold text-gray-900">Create an account</h2>
-                <p class="text-gray-500 mt-2">Get started with your placement preparation.</p>
+                <h2 class="text-3xl font-bold text-slate-900">Create an account</h2>
+                <p class="text-purple-600 mt-2">Get started with your placement preparation.</p>
             </div>
 
             {% if messages %}
             {% for message in messages %}
             <div
-                class="p-4 mb-6 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                class="p-4 mb-6 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
                 <i class="fa-solid fa-circle-exclamation"></i> {{ message }}
             </div>
             {% endfor %}
@@ -100,37 +103,37 @@
                 {% csrf_token %}
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Username</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                             <i class="fa-regular fa-user"></i>
                         </div>
                         <input type="text" name="username" required
-                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
+                            class="block w-full pl-10 pr-3 py-2.5 border border-purple-100 rounded-lg text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
                             placeholder="Choose a username">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Password</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                             <i class="fa-solid fa-lock"></i>
                         </div>
                         <input type="password" name="password" required
-                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
+                            class="block w-full pl-10 pr-3 py-2.5 border border-purple-100 rounded-lg text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
                             placeholder="Minimum 8 characters">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Confirm Password</label>
+                    <label class="block text-sm font-medium text-slate-600 mb-1.5">Confirm Password</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                             <i class="fa-solid fa-shield-halved"></i>
                         </div>
                         <input type="password" name="confirm_password" required
-                            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
+                            class="block w-full pl-10 pr-3 py-2.5 border border-purple-100 rounded-lg text-slate-900 placeholder-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow sm:text-sm"
                             placeholder="Re-enter your password">
                     </div>
                 </div>
@@ -138,24 +141,24 @@
                 <div class="flex items-start">
                     <div class="flex items-center h-5">
                         <input id="terms" type="checkbox" required
-                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            class="w-4 h-4 rounded border-purple-100 placeholder-slate-400 bg-white text-purple-600 border-purple-200 focus:ring-purple-500">
                     </div>
                     <div class="ml-3 text-sm">
-                        <label for="terms" class="text-gray-500">I agree to the <a href="#"
-                                class="font-medium text-blue-600 hover:text-blue-500">Terms</a> and <a href="#"
-                                class="font-medium text-blue-600 hover:text-blue-500">Privacy Policy</a>.</label>
+                        <label for="terms" class="text-purple-600">I agree to the <a href="#"
+                                class="font-medium text-purple-600 hover:text-purple-500">Terms</a> and <a href="#"
+                                class="font-medium text-purple-600 hover:text-purple-500">Privacy Policy</a>.</label>
                     </div>
                 </div>
 
                 <button type="submit"
-                    class="w-full py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all transform active:scale-95">
+                    class="w-full py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-600/30 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all transform active:scale-95">
                     Create account
                 </button>
             </form>
 
             <div class="mt-8 text-center text-sm">
-                <span class="text-gray-500">Already have an account?</span>
-                <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-700 ml-1">Sign in</a>
+                <span class="text-purple-600">Already have an account?</span>
+                <a href="{% url 'login' %}" class="font-medium text-purple-600 hover:text-purple-700 ml-1">Sign in</a>
             </div>
         </div>
     </div>
