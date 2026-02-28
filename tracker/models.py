@@ -57,3 +57,16 @@ class MockTestAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} | {self.accuracy}%"
+
+
+class InterviewAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    score = models.IntegerField()
+    fluency_score = models.IntegerField(default=0)
+    relevance_score = models.IntegerField(default=0)
+    overall_feedback = models.TextField(blank=True, null=True)
+    video_recording = models.FileField(upload_to="interview_recordings/", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - Interview ({self.score}/100)"

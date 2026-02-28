@@ -117,7 +117,7 @@
                 <div class="flex gap-3">
                     <a href="{% url 'upload_jd' %}"
                         class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg shadow-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2">
-                        <i class="fa-solid fa-upload text-slate-400"></i> Upload JD
+                        <i class="fa-solid fa-upload text-slate-400"></i> Target Job 🎯
                     </a>
                     <a href="{% url 'mock_test' %}"
                         class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg shadow-sm hover:bg-primary-700 shadow-primary-200 hover:shadow-primary-300 transition-all flex items-center gap-2">
@@ -177,9 +177,11 @@
                         <i class="fa-regular fa-calendar text-xl"></i>
                     </div>
                     <div>
-                        <p class="text-sm text-slate-500 font-medium">Next Event</p>
-                        <h3 class="text-lg font-bold text-slate-900 leading-tight">Mock Interview</h3>
-                        <p class="text-xs text-slate-400">Tomorrow, 10:00 AM</p>
+                        <p class="text-sm text-slate-500 font-medium">Practice</p>
+                        <h3 class="text-lg font-bold text-slate-900 leading-tight">AI Interview</h3>
+                        <a href="{% url 'mock_interview' %}"
+                            class="text-xs font-semibold text-blue-600 hover:text-blue-700 mt-1 inline-block">Start Now
+                            &rarr;</a>
                     </div>
                 </div>
             </div>

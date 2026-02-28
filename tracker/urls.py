@@ -10,6 +10,8 @@ urlpatterns = [
     path("mock-test/", views.mock_test_view, name="mock_test"),
     path("upload-jd/", views.upload_jd_view, name="upload_jd"),
     path("jd-mock-test/", views.jd_mock_test_view, name="jd_mock_test"),
+    path("mock-interview/", views.mock_interview_view, name="mock_interview"),
+    path("mock-interview-result/", views.mock_interview_result_view, name="mock_interview_result"),
 
 ]
 

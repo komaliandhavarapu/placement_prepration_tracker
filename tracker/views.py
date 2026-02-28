@@ -13,6 +13,7 @@ from .models import (
     Section,
     Progress,
     MockTestAttempt,
+    InterviewAttempt,
 )
 from .utils import extract_text_from_pdf, map_jd_to_sections, extract_relevant_sections
 
@@ -128,6 +129,11 @@ def practice_view(request, section_id):
     section = get_object_or_404(Section, id=section_id)
 
     questions = list(PracticeQuestion.objects.filter(section=section))
+    
+    # Fallback to all questions if no specific questions exist for this section
+    if not questions:
+        questions = list(PracticeQuestion.objects.all())
+        
     random.shuffle(questions)
     questions = questions[:10]
 
@@ -231,9 +237,13 @@ def upload_jd_view(request):
 def jd_mock_test_view(request):
     section_ids = request.session.get("jd_sections", [])
 
-    questions = PracticeQuestion.objects.filter(
-        section_id__in=section_ids
-    ).order_by("?")[:12]
+    if section_ids:
+        questions = list(PracticeQuestion.objects.filter(section_id__in=section_ids))
+    else:
+        questions = list(PracticeQuestion.objects.all())
+        
+    random.shuffle(questions)
+    questions = questions[:12]
 
     score = 0
     submitted = False
@@ -268,4 +278,60 @@ def jd_result_view(request):
 
     return render(request, "jd_result.html", {
         "sections": sections
+    })
+
+
+# -------------------- MOCK INTERVIEW --------------------
+
+@login_required
+def mock_interview_view(request):
+    preset_questions = [
+        "What are your greatest strengths and weaknesses?",
+        "Describe a challenging situation you faced and how you handled it.",
+        "Why should we hire you?"
+    ]
+
+    if request.method == "POST":
+        video_blob = request.FILES.get("video")
+        
+        # Generate dummy detailed feedback upon completion
+        score = random.randint(70, 95)
+        fluency = random.randint(65, 95)
+        relevance = random.randint(70, 98)
+        
+        feedback = "Your answer structure is great, and you provided good examples. To improve, work on maintaining consistent eye contact with the camera and minimizing filler words. Ensure your points directly tie back to the specific skills required for the role."
+        
+        attempt = InterviewAttempt(
+            user=request.user,
+            score=score,
+            fluency_score=fluency,
+            relevance_score=relevance,
+            overall_feedback=feedback,
+        )
+        if video_blob:
+            attempt.video_recording.save(f"interview_{request.user.username}_{timezone.now().strftime('%Y%m%d%H%M%S')}.webm", video_blob)
+        attempt.save()
+
+        # Save ID to session to retrieve on the results page
+        request.session['last_interview_id'] = attempt.id
+        
+        # Used for AJAX form submits
+        from django.http import JsonResponse
+        return JsonResponse({"status": "success", "redirect_url": "/mock-interview-result/"})
+
+    return render(request, "mock_interview.html", {
+        "questions": preset_questions
+    })
+
+@login_required
+def mock_interview_result_view(request):
+    attempt_id = request.session.get('last_interview_id')
+    if not attempt_id:
+        return redirect("dashboard")
+        
+    from django.shortcuts import get_object_or_404
+    attempt = get_object_or_404(InterviewAttempt, id=attempt_id)
+    
+    return render(request, "mock_interview_result.html", {
+        "attempt": attempt
     })
