@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import CodingQuestion, CodingAttempt
 
 @login_required
-def coding_practice_view(request):
+def coding_practice_view(request, question_id=None):
     if 'coding_questions' not in request.session:
         # Get 3 random coding questions
         questions = list(CodingQuestion.objects.all())
@@ -24,29 +24,83 @@ def coding_practice_view(request):
     questions_ids = request.session.get('coding_questions', [])
     current_index = request.session.get('coding_current_index', 0)
 
-    # If no questions in DB, create a dummy one
+    # If no questions in DB, create dummy ones
     if not questions_ids:
-        dummy_q = CodingQuestion.objects.create(
-            title="Determine the float floor",
-            description="Determine the integer floor of the sum of two floating point numbers. The floor is the truncated float value, i.e. anything after the decimal point is dropped. For instance, floor(1.1 + 3.05) = floor(4.15) = 4.",
-            constraints="0.1 < a, b < 10^6\na and b have at most 8 places after the decimal",
-            initial_code="def addNumbers(a, b):\n    # Write your code here\n    pass",
-            test_cases_json=json.dumps([{"input": [1.1, 3.05], "expected": 4}, {"input": [2.3, 4.1], "expected": 6}]),
+        dummy_1 = CodingQuestion.objects.create(
+            title="Two Sum",
+            description='''Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\nYou can return the answer in any order.\n\n### Function Description\nComplete the `twoSum` function in the editor below. \n`twoSum` has the following parameter(s):\n- `int nums[n]`: an array of integers to search\n- `int target`: the target sum to find\n\n### Returns\n- `int[2]`: an array containing the indices of the two numbers.''',
+            constraints='''- `2 <= nums.length <= 10^4`\n- `-10^9 <= nums[i] <= 10^9`\n- `-10^9 <= target <= 10^9`\n- **Only one valid answer exists.**''',
+            initial_code="def twoSum(nums, target):\n    # Write your code here\n    pass",
+            test_cases_json=json.dumps([
+                {"input": [[2, 7, 11, 15], 9], "expected": [0, 1]}, 
+                {"input": [[3, 2, 4], 6], "expected": [1, 2]},
+                {"input": [[3, 3], 6], "expected": [0, 1]}
+            ]),
             tag="Algorithms"
         )
-        request.session['coding_questions'] = [dummy_q.id]
-        questions_ids = [dummy_q.id]
+        dummy_2 = CodingQuestion.objects.create(
+            title="Palindrome Number",
+            description='''Given an integer `x`, return `True` if `x` is a palindrome, and `False` otherwise.\n\nAn integer is a palindrome when it reads the same forward and backward.\nFor example, `121` is a palindrome while `123` is not.\n\n### Function Description\nComplete the `isPalindrome` function in the editor below.\n\n`isPalindrome` has the following parameter(s):\n- `int x`: An integer to evaluate\n\n### Returns\n- `bool`: `True` if palindrome, `False` otherwise.''',
+            constraints='''- `-2^31 <= x <= 2^31 - 1`''',
+            initial_code="def isPalindrome(x):\n    # Write your code here\n    pass",
+            test_cases_json=json.dumps([
+                {"input": [121], "expected": True},
+                {"input": [-121], "expected": False},
+                {"input": [10], "expected": False}
+            ]),
+            tag="Algorithms"
+        )
+        dummy_3 = CodingQuestion.objects.create(
+            title="Valid Parentheses",
+            description='''Given a string `s` containing just the characters `'('`, `')'`, `'{'`, `'}'`, `'['` and `']'`, determine if the input string is valid.\n\nAn input string is valid if:\n1. Open brackets must be closed by the same type of brackets.\n2. Open brackets must be closed in the correct order.\n3. Every close bracket has a corresponding open bracket of the same type.\n\n### Function Description\nComplete the `isValid` function in the editor below.\n\n`isValid` has the following parameter(s):\n- `str s`: A string of bracket characters\n\n### Returns\n- `bool`: `True` if the string is valid, `False` otherwise.''',
+            constraints='''- `1 <= s.length <= 10^4`\n- `s` consists of parentheses only `'()[]{}'`.''',
+            initial_code="def isValid(s):\n    # Write your code here\n    pass",
+            test_cases_json=json.dumps([
+                {"input": ["()"], "expected": True},
+                {"input": ["()[]{}"], "expected": True},
+                {"input": ["(]"], "expected": False}
+            ]),
+            tag="Data Structures"
+        )
+        
+        request.session['coding_questions'] = [dummy_1.id, dummy_2.id, dummy_3.id]
+        questions_ids = [dummy_1.id, dummy_2.id, dummy_3.id]
 
     if current_index >= len(questions_ids):
         return redirect('coding_result')
 
-    question = get_object_or_404(CodingQuestion, id=questions_ids[current_index])
+    # If question_id is provided via URL, use it and update session index if possible
+    if question_id:
+        question = get_object_or_404(CodingQuestion, id=question_id)
+        if question_id in questions_ids:
+            current_index = questions_ids.index(question_id)
+            request.session['coding_current_index'] = current_index
+    else:
+        question = get_object_or_404(CodingQuestion, id=questions_ids[current_index])
+
+    # Parse test cases to extract examples for UI
+    examples = []
+    try:
+        test_cases = json.loads(question.test_cases_json)
+        # Grab up to 2 test cases to display as examples
+        for i, tc in enumerate(test_cases[:2]):
+            examples.append({
+                "num": i + 1,
+                "input": ", ".join([str(val) for val in tc.get('input', [])]),
+                "expected": str(tc.get('expected', ''))
+            })
+    except:
+        pass
+
+    all_questions = CodingQuestion.objects.all()
 
     return render(request, "coding_practice.html", {
         "question": question,
         "current_index": current_index + 1,
         "total": len(questions_ids),
-        "total_range": range(1, len(questions_ids) + 1)
+        "total_range": range(1, len(questions_ids) + 1),
+        "examples": examples,
+        "all_questions": all_questions
     })
 
 @csrf_exempt
@@ -57,6 +111,7 @@ def coding_execute_view(request):
             data = json.loads(request.body)
             code = data.get("code", "")
             question_id = data.get("question_id")
+            is_submit = data.get("is_submit", False)
             
             question = get_object_or_404(CodingQuestion, id=question_id)
             test_cases = json.loads(question.test_cases_json)
@@ -95,17 +150,23 @@ def coding_execute_view(request):
                 except Exception as e:
                     results.append({"status": "error", "message": str(e)})
             
-            if passed == total:
+            if passed == total or is_submit:
+                # Calculate prorated score
+                score_gained = int((passed / total) * 10) if total > 0 else 0
+                
                 # Update score
-                request.session['coding_score'] = request.session.get('coding_score', 0) + 10
+                request.session['coding_score'] = request.session.get('coding_score', 0) + score_gained
                 request.session['coding_current_index'] = request.session.get('coding_current_index', 0) + 1
                 request.session.modified = True
                 
                 res_dict = request.session.get('coding_results', {})
-                res_dict[question.tag] = res_dict.get(question.tag, 0) + 10
+                res_dict[question.tag] = res_dict.get(question.tag, 0) + score_gained
                 request.session['coding_results'] = res_dict
                 
-                return JsonResponse({"status": "success", "message": "All test cases passed!", "redirect": True})
+                status_msg = "All test cases passed!" if passed == total else f"Submitted. {passed}/{total} test cases passed."
+                stat_type = "success" if passed == total else "submitted"
+                
+                return JsonResponse({"status": stat_type, "message": status_msg, "redirect": True, "passed": passed, "total": total, "results": results})
             else:
                 return JsonResponse({"status": "partial", "passed": passed, "total": total, "results": results})
                 

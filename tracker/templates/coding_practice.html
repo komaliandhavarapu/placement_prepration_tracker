@@ -44,7 +44,13 @@
 
     <style>
         .CodeMirror {
-            height: 100%;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: auto;
+            width: 100%;
             font-family: 'Fira Code', monospace;
             font-size: 14px;
             background-color: transparent !important;
@@ -119,12 +125,25 @@
                     <span class="text-sm font-semibold">Task Description</span>
                     <i class="fa-regular fa-pen-to-square text-xs cursor-pointer hover:text-white"></i>
                 </div>
-                <i class="fa-solid fa-bars text-lg cursor-pointer hover:text-white"></i>
+                <i class="fa-solid fa-bars text-lg cursor-pointer hover:text-white" onclick="toggleQuestionList()"></i>
             </div>
 
             <div class="p-6 overflow-y-auto flex-1 text-sm text-slate-300 leading-relaxed font-light">
                 <h2 class="text-xl font-bold text-white mb-6">{{ question.title }}</h2>
                 <div class="whitespace-pre-wrap mb-8 text-[#cccccc]">{{ question.description }}</div>
+
+                {% if examples %}
+                <h3 class="text-white font-bold text-base mb-3 mt-8">Examples</h3>
+                <div class="space-y-4">
+                    {% for ex in examples %}
+                    <div class="bg-black/20 p-3 rounded font-mono text-xs text-slate-300 border border-white/5">
+                        <div class="text-slate-400 mb-1 font-bold">Example {{ ex.num }}</div>
+                        <div><span class="text-white font-bold">Input:</span> {{ ex.input }}</div>
+                        <div class="mt-1"><span class="text-white font-bold">Output:</span> {{ ex.expected }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
 
                 <h3 class="text-white font-bold text-base mb-3 mt-8">Constraints</h3>
                 <div
@@ -201,7 +220,11 @@
                             class="text-slate-400 hover:text-slate-300 px-4 h-full border-b-2 border-transparent transition-colors">Interviewer
                             Notes</button>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-2">
+                        <button id="submit-btn"
+                            class="px-3 py-1.5 bg-[#1e1e1e] hover:bg-[#00a85a] hover:text-white text-[#00a85a] font-semibold text-xs rounded transition-colors flex items-center gap-2 border border-[#00a85a]">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Submit
+                        </button>
                         <button id="run-btn"
                             class="px-4 py-1.5 bg-[#00a85a] hover:bg-[#00924e] text-white font-semibold text-xs rounded transition-colors flex items-center gap-2 shadow-sm border border-[#00924e]">
                             <i class="fa-solid fa-play"></i> Run Code
@@ -210,9 +233,8 @@
                 </div>
 
                 <!-- Output Console -->
-                <div class="flex-1 bg-editorbg p-4 overflow-y-auto font-mono text-sm leading-relaxed"
-                    id="output-console">
-                    <div class="text-[#00a85a]">>>> Ready to run...</div>
+                <div class="flex-1 bg-editorbg overflow-hidden flex" id="output-console">
+                    <div class="p-4 font-mono text-sm text-[#00a85a]">>>> Ready to run...</div>
                 </div>
 
                 <!-- Bottom Status Bar -->
@@ -226,7 +248,40 @@
         </main>
     </div>
 
+    <!-- Question List Overlay -->
+    <div id="question-list-overlay" class="fixed inset-0 bg-black/50 z-[60] hidden transition-opacity"
+        onclick="toggleQuestionList()"></div>
+    <div id="question-list-panel"
+        class="fixed top-0 right-0 h-full w-80 bg-sidebar border-l border-[#111] z-[70] transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
+        <div
+            class="h-14 bg-sidebarhead border-b border-[#111] flex items-center justify-between px-6 text-white font-bold shrink-0">
+            <h3>All Questions</h3>
+            <i class="fa-solid fa-xmark cursor-pointer hover:text-red-500 text-lg" onclick="toggleQuestionList()"></i>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            {% for q in all_questions %}
+            <a href="{% url 'coding_practice_q' q.id %}"
+                class="block p-4 rounded-lg border {% if q.id == question.id %}bg-black/40 border-accent/50 text-white{% else %}bg-editorbg border-[#333] hover:border-[#555] text-slate-300{% endif %} transition-colors">
+                <div class="font-bold mb-1">{{ q.title }}</div>
+                <div class="text-xs text-slate-500 font-mono">{{ q.tag }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
     <script>
+        function toggleQuestionList() {
+            const panel = document.getElementById('question-list-panel');
+            const overlay = document.getElementById('question-list-overlay');
+            if (panel.classList.contains('translate-x-full')) {
+                panel.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                panel.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize CodeMirror
             const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
@@ -245,60 +300,272 @@
             }, 100);
 
             const runBtn = document.getElementById('run-btn');
+            const submitBtn = document.getElementById('submit-btn');
             const outputConsole = document.getElementById('output-console');
 
             runBtn.addEventListener('click', async () => {
                 const code = editor.getValue();
-                const questionId = {{ question.id }
-            };
+                const questionId = '{{ question.id|default:1 }}';
 
-            runBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running...';
-            runBtn.disabled = true;
-            outputConsole.innerHTML = '<div class="text-slate-400">Executing code...</div>';
+                runBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running...';
+                runBtn.disabled = true;
+                outputConsole.innerHTML = '<div class="text-slate-400">Executing code...</div>';
 
-            try {
-                const response = await fetch('/coding/execute/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: JSON.stringify({ code: code, question_id: questionId })
-                });
-
-                const data = await response.json();
-
-                if (data.status === 'success' && data.redirect) {
-                    outputConsole.innerHTML = '<div class="text-[#00a85a] font-bold">>>> All test cases passed! Moving to next question...</div>';
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else if (data.status === 'partial') {
-                    let html = `<div class="text-yellow-500 mb-2 font-bold">>>> Passed ${data.passed}/${data.total} test cases</div>`;
-                    data.results.forEach((res, idx) => {
-                        if (res.status === 'passed') {
-                            html += `<div class="text-[#00a85a] mt-2">>>> Test case ${idx + 1}: Passed</div>`;
-                        } else {
-                            html += `<div class="text-red-400 mt-2">>>> Test case ${idx + 1}: Failed</div>
-                                         <div class="text-slate-400 pl-4 text-xs">Input: ${JSON.stringify(res.input)}</div>
-                                         <div class="text-slate-400 pl-4 text-xs">Expected: ${JSON.stringify(res.expected)}</div>
-                                         <div class="text-slate-400 pl-4 text-xs">Got: ${JSON.stringify(res.got)}</div>`;
-                        }
+                try {
+                    const response = await fetch('/coding/execute/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ code: code, question_id: questionId })
                     });
-                    outputConsole.innerHTML = html;
-                    runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run Code';
+
+                    const data = await response.json();
+
+                    const renderOutput = (data) => {
+                        if (data.status === 'success' || data.status === 'partial' || data.status === 'submitted') {
+                            const allPassed = data.passed === data.total;
+                            const isSubmitted = data.status === 'submitted' || data.status === 'success';
+                            let statusColor = "text-[#eab308]"; // Default to yellow for partial submission
+                            if (allPassed) statusColor = "text-[#00a85a]"; // Green for perfect
+                            if (data.status === 'partial' && !allPassed) statusColor = "text-red-500"; // Red for partial test run
+
+                            let sidebarHtml = '<div class="w-48 border-r border-[#333] overflow-y-auto bg-[#1e1e1e] flex flex-col pt-2">';
+                            let contentHtml = '<div class="flex-1 overflow-y-auto p-6 bg-[#1a1c23]">';
+
+                            data.results.forEach((res, idx) => {
+                                const isPassed = res.status === 'passed';
+                                const icon = isPassed ? '<i class="fa-solid fa-check text-[#00a85a]"></i>' : '<i class="fa-solid fa-xmark text-red-500"></i>';
+                                const tabBg = idx === 0 ? 'bg-[#2b2c31] border-l-2 border-[#00a85a]' : 'border-l-2 border-transparent hover:bg-black/20';
+
+                                sidebarHtml += `
+                                    <div class="px-4 py-3 cursor-pointer flex items-center justify-between text-sm test-tab ${tabBg}" data-target="test-panel-${idx}">
+                                        <span class="${isPassed ? 'text-[#00a85a]' : 'text-red-500'} font-semibold">Test case ${idx}</span>
+                                        ${icon}
+                                    </div>
+                                `;
+
+                                const msgColor = isPassed ? 'text-[#00a85a]' : 'text-red-500';
+                                const msgText = isPassed ? 'Success' : (res.message ? res.message : 'Wrong Answer');
+
+                                contentHtml += `
+                                    <div id="test-panel-${idx}" class="test-panel ${idx === 0 ? '' : 'hidden'} space-y-6">
+                                        <div>
+                                            <div class="text-slate-500 text-xs font-semibold mb-1 uppercase tracking-wider">Compiler Message</div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm ${msgColor} font-bold break-words">${msgText}</div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Input (stdin)</div>
+                                            </div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm text-slate-300 break-words">${JSON.stringify(res.input)}</div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Your Output (stdout)</div>
+                                            </div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm text-slate-300 break-words">${res.got !== undefined ? JSON.stringify(res.got) : 'No Output'}</div>
+                                        </div>
+                                        
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Expected Output</div>
+                                            </div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm text-slate-300 break-words">${JSON.stringify(res.expected)}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            sidebarHtml += '</div>';
+                            contentHtml += '</div>';
+
+                            return `
+                                <div class="w-full h-full flex flex-col">
+                                    <div class="px-6 py-4 bg-[#25262a] border-b border-[#333] shrink-0 flex items-center justify-between">
+                                        <div class="font-bold text-lg ${statusColor}">Status: ${data.message || (allPassed ? "Compiled successfully. All available test cases passed!" : `Failed. ${data.passed}/${data.total} test cases passed.`)}</div>
+                                        ${isSubmitted ? `<button onclick="window.location.href='/coding/'" class="bg-[#00a85a] hover:bg-[#00924e] text-white px-4 py-2 rounded text-sm font-semibold transition-colors shadow-sm">Next Question <i class="fa-solid fa-arrow-right ml-2 text-xs"></i></button>` : ''}
+                                    </div>
+                                    <div class="flex flex-1 overflow-hidden">
+                                        ${sidebarHtml}
+                                        ${contentHtml}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `<div class="p-6 w-full h-full overflow-y-auto">
+                                <div class="text-red-500 font-bold mb-2">Error during execution:</div>
+                                <div class="bg-[#25262a] p-4 rounded border border-[#333] font-mono text-sm text-slate-300 whitespace-pre-wrap">${data.message}</div>
+                            </div>`;
+                        }
+                    };
+
+                    outputConsole.innerHTML = renderOutput(data);
+
+                    // Add interactive tabs logic
+                    if (data.status === 'success' || data.status === 'partial' || data.status === 'submitted') {
+                        const tabs = outputConsole.querySelectorAll('.test-tab');
+                        const panels = outputConsole.querySelectorAll('.test-panel');
+
+                        tabs.forEach(tab => {
+                            tab.addEventListener('click', () => {
+                                // Reset all tabs
+                                tabs.forEach(t => t.className = t.className.replace('bg-[#2b2c31] border-l-2 border-[#00a85a]', 'border-l-2 border-transparent hover:bg-black/20'));
+                                // Set active tab
+                                tab.className = tab.className.replace('border-l-2 border-transparent hover:bg-black/20', 'bg-[#2b2c31] border-l-2 border-[#00a85a]');
+
+                                // Hide all panels
+                                panels.forEach(p => p.classList.add('hidden'));
+                                // Show target panel
+                                const targetId = tab.getAttribute('data-target');
+                                outputConsole.querySelector('#' + targetId).classList.remove('hidden');
+                            });
+                        });
+                    }
+
+                    runBtn.innerHTML = '<i class="fa-solid fa-play mr-2 text-xs"></i> Run Code';
                     runBtn.disabled = false;
-                } else {
-                    outputConsole.innerHTML = `<div class="text-red-500 whitespace-pre-wrap font-bold">>>> Error:\n${data.message}</div>`;
-                    runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run Code';
+
+                } catch (error) {
+                    outputConsole.innerHTML = `<div class="p-6 text-red-500 font-bold">>>> Connection Error: ${error.message}</div>`;
+                    runBtn.innerHTML = '<i class="fa-solid fa-play mr-2 text-xs"></i> Run Code';
                     runBtn.disabled = false;
                 }
-            } catch (error) {
-                outputConsole.innerHTML = `<div class="text-red-500 font-bold">>>> Connection Error: ${error.message}</div>`;
-                runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run Code';
-                runBtn.disabled = false;
-            }
-        });
+            });
+
+            // Handle Submit Code action
+            submitBtn.addEventListener('click', async () => {
+                const code = editor.getValue();
+                const questionId = '{{ question.id|default:1 }}';
+
+                submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2 text-xs"></i> Submitting...';
+                submitBtn.disabled = true;
+                runBtn.disabled = true;
+
+                try {
+                    const response = await fetch('{% url "coding_execute" %}', {
+                        method: 'POST',
+                        body: JSON.stringify({ code: code, question_id: questionId, is_submit: true }),
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    // Re-use the renderOutput function defined above, just execute the exact same UI branch
+                    // Note: In an actual refactor, renderOutput should be hoisted outside the button listeners.
+
+                    const renderOutput = (data) => {
+                        if (data.status === 'success' || data.status === 'partial' || data.status === 'submitted') {
+                            const allPassed = data.passed === data.total;
+                            const isSubmitted = data.status === 'submitted' || data.status === 'success';
+                            let statusColor = "text-[#eab308]"; // Default to yellow for partial submission
+                            if (allPassed) statusColor = "text-[#00a85a]"; // Green for perfect
+                            if (data.status === 'partial' && !allPassed) statusColor = "text-red-500"; // Red for partial test run
+
+                            let sidebarHtml = '<div class="w-48 border-r border-[#333] overflow-y-auto bg-[#1e1e1e] flex flex-col pt-2">';
+                            let contentHtml = '<div class="flex-1 overflow-y-auto p-6 bg-[#1a1c23]">';
+
+                            data.results.forEach((res, idx) => {
+                                const isPassed = res.status === 'passed';
+                                const icon = isPassed ? '<i class="fa-solid fa-check text-[#00a85a]"></i>' : '<i class="fa-solid fa-xmark text-red-500"></i>';
+                                const tabBg = idx === 0 ? 'bg-[#2b2c31] border-l-2 border-[#00a85a]' : 'border-l-2 border-transparent hover:bg-black/20';
+
+                                sidebarHtml += `
+                                    <div class="px-4 py-3 cursor-pointer flex items-center justify-between text-sm test-tab ${tabBg}" data-target="test-panel-${idx}">
+                                        <span class="${isPassed ? 'text-[#00a85a]' : 'text-red-500'} font-semibold">Test case ${idx}</span>
+                                        ${icon}
+                                    </div>
+                                `;
+
+                                const msgColor = isPassed ? 'text-[#00a85a]' : 'text-red-500';
+                                const msgText = isPassed ? 'Success' : (res.message ? res.message : 'Wrong Answer');
+
+                                contentHtml += `
+                                    <div id="test-panel-${idx}" class="test-panel ${idx === 0 ? '' : 'hidden'} space-y-6">
+                                        <div>
+                                            <div class="text-slate-500 text-xs font-semibold mb-1 uppercase tracking-wider">Compiler Message</div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm ${msgColor} font-bold break-words">${msgText}</div>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Input (stdin)</div>
+                                            </div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm text-slate-300 break-words">${JSON.stringify(res.input)}</div>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Your Output (stdout)</div>
+                                            </div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm text-slate-300 break-words">${res.got !== undefined ? JSON.stringify(res.got) : 'No Output'}</div>
+                                        </div>
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="text-slate-500 text-xs font-semibold uppercase tracking-wider">Expected Output</div>
+                                            </div>
+                                            <div class="bg-[#25262a] p-3 rounded border border-[#333] font-mono text-sm text-slate-300 break-words">${JSON.stringify(res.expected)}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            sidebarHtml += '</div>';
+                            contentHtml += '</div>';
+
+                            return `
+                                <div class="w-full h-full flex flex-col">
+                                    <div class="px-6 py-4 bg-[#25262a] border-b border-[#333] shrink-0 flex items-center justify-between">
+                                        <div class="font-bold text-lg ${statusColor}">Status: ${data.message || (allPassed ? "Compiled successfully. All available test cases passed!" : `Failed. ${data.passed}/${data.total} test cases passed.`)}</div>
+                                        ${isSubmitted ? `<button onclick="window.location.href='/coding/'" class="bg-[#00a85a] hover:bg-[#00924e] text-white px-4 py-2 rounded text-sm font-semibold transition-colors shadow-sm">Next Question <i class="fa-solid fa-arrow-right ml-2 text-xs"></i></button>` : ''}
+                                    </div>
+                                    <div class="flex flex-1 overflow-hidden">
+                                        ${sidebarHtml}
+                                        ${contentHtml}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            return `<div class="p-6 w-full h-full overflow-y-auto">
+                                <div class="text-red-500 font-bold mb-2">Error during execution:</div>
+                                <div class="bg-[#25262a] p-4 rounded border border-[#333] font-mono text-sm text-slate-300 whitespace-pre-wrap">${data.message}</div>
+                            </div>`;
+                        }
+                    };
+
+                    outputConsole.innerHTML = renderOutput(data);
+
+                    if (data.status === 'success' || data.status === 'partial' || data.status === 'submitted') {
+                        const tabs = outputConsole.querySelectorAll('.test-tab');
+                        const panels = outputConsole.querySelectorAll('.test-panel');
+
+                        tabs.forEach(tab => {
+                            tab.addEventListener('click', () => {
+                                tabs.forEach(t => t.className = t.className.replace('bg-[#2b2c31] border-l-2 border-[#00a85a]', 'border-l-2 border-transparent hover:bg-black/20'));
+                                tab.className = tab.className.replace('border-l-2 border-transparent hover:bg-black/20', 'bg-[#2b2c31] border-l-2 border-[#00a85a]');
+
+                                panels.forEach(p => p.classList.add('hidden'));
+                                const targetId = tab.getAttribute('data-target');
+                                outputConsole.querySelector('#' + targetId).classList.remove('hidden');
+                            });
+                        });
+                    }
+
+                    submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2 text-xs"></i> Submit Code';
+                    submitBtn.disabled = false;
+                    runBtn.disabled = false;
+
+                } catch (error) {
+                    outputConsole.innerHTML = `<div class="p-6 text-red-500 font-bold">>>> Connection Error: ${error.message}</div>`;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2 text-xs"></i> Submit Code';
+                    submitBtn.disabled = false;
+                    runBtn.disabled = false;
+                }
+            });
         });
     </script>
 </body>

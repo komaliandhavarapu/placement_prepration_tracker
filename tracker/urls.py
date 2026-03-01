@@ -14,6 +14,7 @@ urlpatterns = [
     path("mock-interview/", views.mock_interview_view, name="mock_interview"),
     path("mock-interview-result/", views.mock_interview_result_view, name="mock_interview_result"),
     path("coding/", coding_views.coding_practice_view, name="coding_practice"),
+    path("coding/<int:question_id>/", coding_views.coding_practice_view, name="coding_practice_q"),
     path("coding/execute/", coding_views.coding_execute_view, name="coding_execute"),
     path("coding/result/", coding_views.coding_result_view, name="coding_result"),
 ]
