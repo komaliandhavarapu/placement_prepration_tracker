@@ -145,7 +145,7 @@ def practice_view(request, section_id):
 
         for q in questions:
             selected = request.POST.get(f"q{q.id}")
-            if selected == q.correct_answer:
+            if selected and selected.lower() == q.correct_answer.lower():
                 score += 1
 
         accuracy = (score / total) * 100 if total > 0 else 0
@@ -187,20 +187,36 @@ def mock_test_view(request):
     submitted = False
 
     if request.method == "POST":
+        section_scores = {}
 
         for q in questions:
+            if q.section not in section_scores:
+                section_scores[q.section] = {"score": 0, "total": 0}
+            section_scores[q.section]["total"] += 1
+
             selected = request.POST.get(f"q{q.id}")
-            if selected == q.correct_answer:
+            if selected and selected.lower() == q.correct_answer.lower():
                 score += 1
+                section_scores[q.section]["score"] += 1
 
         accuracy = (score / total) * 100 if total > 0 else 0
-        from .models import MockTestAttempt
+        from .models import MockTestAttempt, Progress
         MockTestAttempt.objects.create(
             user=request.user,
             score=score,
             total_questions=total,
             accuracy=accuracy
         )
+        
+        for sec, data in section_scores.items():
+            if sec:
+                Progress.objects.create(
+                    user=request.user,
+                    section=sec,
+                    score=data["score"],
+                    total_questions=data["total"],
+                    accuracy=(data["score"] / data["total"]) * 100 if data["total"] > 0 else 0
+                )
 
         submitted = True   # ✅ Score will show
 
@@ -250,18 +266,36 @@ def jd_mock_test_view(request):
 
     if request.method == "POST":
         submitted = True
+        section_scores = {}
+        
         for q in questions:
-            if request.POST.get(f"q{q.id}") == q.correct_answer:
+            if q.section not in section_scores:
+                section_scores[q.section] = {"score": 0, "total": 0}
+            section_scores[q.section]["total"] += 1
+
+            selected = request.POST.get(f"q{q.id}")
+            if selected and selected.lower() == q.correct_answer.lower():
                 score += 1
+                section_scores[q.section]["score"] += 1
                 
         accuracy = (score / len(questions)) * 100 if len(questions) > 0 else 0
-        from .models import MockTestAttempt
+        from .models import MockTestAttempt, Progress
         MockTestAttempt.objects.create(
             user=request.user,
             score=score,
             total_questions=len(questions),
             accuracy=accuracy
         )
+        
+        for sec, data in section_scores.items():
+            if sec:
+                Progress.objects.create(
+                    user=request.user,
+                    section=sec,
+                    score=data["score"],
+                    total_questions=data["total"],
+                    accuracy=(data["score"] / data["total"]) * 100 if data["total"] > 0 else 0
+                )
 
     return render(request, "mock_test.html", {
         "questions": questions,

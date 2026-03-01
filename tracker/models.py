@@ -1,13 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 
 class Section(models.Model):
     name = models.CharField(max_length=50)
 
     def __str__(self):
         return self.name
-
 
 class PracticeQuestion(models.Model):
     section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True)    
@@ -21,9 +20,6 @@ class PracticeQuestion(models.Model):
     def __str__(self):
         return self.question[:50]
 
-
-from django.utils import timezone
-
 class Progress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True)
@@ -35,7 +31,6 @@ class Progress(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.accuracy}%"
 
-
 class JobDescription(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
@@ -45,8 +40,6 @@ class JobDescription(models.Model):
 
     def __str__(self):
         return self.title
-from django.db import models
-from django.contrib.auth.models import User
 
 class MockTestAttempt(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -57,7 +50,6 @@ class MockTestAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} | {self.accuracy}%"
-
 
 class InterviewAttempt(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -70,3 +62,25 @@ class InterviewAttempt(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - Interview ({self.score}/100)"
+
+class CodingQuestion(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    constraints = models.TextField(blank=True)
+    initial_code = models.TextField(default="def solution():\n    pass")
+    test_cases_json = models.TextField(help_text="JSON list of test case dicts [{'input': '...', 'expected': '...'}]")
+    tag = models.CharField(max_length=50, default="Algorithms")
+
+    def __str__(self):
+        return self.title
+
+class CodingAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
+    total_questions = models.IntegerField(default=5)
+    time_taken_seconds = models.IntegerField(default=0)
+    tags_breakdown_json = models.TextField(default="{}")
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - Coding Attempt ({self.score})"
